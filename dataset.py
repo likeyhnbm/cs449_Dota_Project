@@ -9,17 +9,10 @@ from torch.utils.data import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
 
-class DotaTrainDataset(Dataset):
+class DotaDataset(Dataset):
+    """Dota dataset."""
 
-
-    def __init__(self, list_name='train_split.txt',json_dir="annotations",frames_dir="frames",frame_size=32):
-
-        # 
-        # List_name : a txt file containing the list of video file.
-        # json_dir : the folder name of json files.
-        # frames_dir: the folder name of fames.
-        # frame_size: the target length of x.
-        # 
+    def __init__(self, list_name,json_dir,frames_dir,frame_size):
         
         self.frames_dir = frames_dir
         self.frame_size = frame_size
@@ -62,27 +55,39 @@ class DotaTrainDataset(Dataset):
         anomaly_start = info['anomaly_start'][0]
         anomaly_end = info['anomaly_end'][0]
         anomaly_length = anomaly_end - anomaly_start
+
         
         #For normal
         if not label:
+
+            if anomaly_start == 0:
+                return self.__getitem__(idx+1)
             imgs = []
-            print(1)
+            
             for i in range(anomaly_start):
+                
                 img_name = self.frames_dir+"/"+file_name+"/%06d.jpg" % i 
-               
+              
                 img = cv2.imread(img_name)
+
+                img = cv2.resize(img,(112,112))
                
                 imgs.append(img)
-            xs = []
             
+            xs = []
+
+            
+
             for i in range(self.frame_size):
-                xs.append(imgs[i*anomaly_length // self.frame_size])
+               
+                xs.append(imgs[i*anomaly_start // self.frame_size])
         #For normal
         else:
             imgs = []
             for i in range(anomaly_start,anomaly_end):
                 img_name = self.frames_dir+"/"+file_name+"/%06d.jpg" % i 
                 img = cv2.imread(img_name)
+                img = cv2.resize(img,(112,112))
                 imgs.append(img)
             xs = []
             
@@ -90,5 +95,4 @@ class DotaTrainDataset(Dataset):
                 xs.append(imgs[i*anomaly_length // self.frame_size])
         
         
-        
-        return np.array(xs),label
+        return torch.from_numpy(np.array(xs).swapaxes(0,3).swapaxes(1,3)/255),label
