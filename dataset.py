@@ -12,10 +12,11 @@ import matplotlib.pyplot as plt
 class DotaDataset(Dataset):
     """Dota dataset."""
 
-    def __init__(self, list_name,json_dir,frames_dir,frame_size):
+    def __init__(self, list_name,json_dir,frames_dir,frame_size,antype):
         
         self.frames_dir = frames_dir
         self.frame_size = frame_size
+
         #read file list
         f=open(list_name)
         file_list = f.read().splitlines()
@@ -38,11 +39,14 @@ class DotaDataset(Dataset):
 
         for filename in file_list:
             info = pd.read_json(json_dir+'/'+filename+".json")
-            self.jsons.append(info)
+
+            if info['accident_name'][0]==antype:
+                self.jsons.append(info)
 
 
     def __len__(self):
         return 2*len(self.jsons)
+
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
